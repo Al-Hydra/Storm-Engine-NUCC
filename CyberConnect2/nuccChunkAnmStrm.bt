@@ -1,0 +1,88 @@
+//------------------------------------------------
+//--- 010 Editor v11.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+
+#include "/../include.h";
+//BigEndian();
+typedef struct {
+    
+    u32 AnmLength;
+    u32 FrameSize;
+    
+    u16 EntryCount;
+    u16 Looped;
+    
+    u16 ClumpCount;
+    u16 OtherEntryCount;
+    
+
+    u32 CoordCount;
+
+    local int i;
+    local int m;
+    local int bm;
+
+    local int frameCount = AnmLength/FrameSize;
+    struct{
+    for (i = 0; i < ClumpCount; i++)
+        {
+            struct
+            {   
+                u32 ClumpIndex;
+                local string ClumpName = ReadTExtraMapping(Xfbin.ChunkTable.ExtraMappings[ClumpIndex]);
+                u16 BoneMaterialCount;
+                u16 ModelCount;
+                
+                struct{
+                    for (bm = 0; bm < BoneMaterialCount; bm++)
+                    {
+                        u32 BoneMaterialIndex <read = ReadTExtraMapping(Xfbin.ChunkTable.ExtraMappings[this])>;
+                    }
+                }BoneMaterialIndices;
+
+                struct{
+                    for (m = 0; m < ModelCount; m++)
+                    {
+                        u32 ModelIndex <read = ReadTExtraMapping(Xfbin.ChunkTable.ExtraMappings[this])>;
+                    }
+                }ModelIndices;
+
+                u32 Padding[ModelCount];
+    
+            } Clump <read = ClumpName>;
+        }
+    }Clumps;
+
+    u32 OtherEntryChunkIndices[OtherEntryCount];
+
+// This is bones parents: first u32 is parent, second u32 is child (or current bone)
+    struct TCoordParent CoordParents[CoordCount];
+
+    local int Pos;
+    struct{
+
+        for (i = 0; i < frameCount; i++)
+            {
+                struct
+                {   
+                    u16 unk1;
+                    u16 FrameChunkOffset;
+                    u32 Frame;
+        
+                } Frame;
+            }
+    }Frames;
+    
+    
+
+} TNuccAnmStrm;

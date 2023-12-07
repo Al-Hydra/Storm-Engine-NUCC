@@ -1,0 +1,494 @@
+//------------------------------------------------
+//--- 010 Editor v10.0.2 Binary Template
+//
+//      File: nucc.bt
+//   Authors: SutandoTsukai181
+//   Version: 1.3
+//   Purpose: Contains structs for parsing nuccChunks inside Xfbin files
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//   1.0 - Initial release
+//   1.1 - Added nuccChunkCoord struct
+//   1.2 - Added nuccChunkClump and nuccChunkModel structs
+//   1.3 - Added nuccChunkModelHit and updated nuccChunkDynamics
+//------------------------------------------------
+
+#include "/../include.h"
+#include "nuccChunkAnm.bt"
+#include "nuccChunkAnmStrm.bt"
+#include "nuccChunkAnmStrmFrame.bt"
+#include "nuccChunkParticle.bt"
+#include "nuccChunkFont.bt"
+#include "nut.bt"
+
+typedef struct
+{
+    u32 PageSize;
+    u32 ExtraIndicesSize;
+} TNuccPage;
+
+typedef struct
+{
+    u16 Field00;
+    u16 Width;
+    u16 Height;
+    u16 Field06;
+
+    u32 Size;
+
+    #ifdef NUT
+        FPushBase();
+        {
+            TNut Nut;
+        }
+        FPopBase();
+    #else
+        u8 Data[Size];
+    #endif
+} TNuccTexture;
+
+typedef struct
+{
+    u16 Field00;
+    u16 Field02;
+
+    u8  Flags0;
+    u8  Flags1;
+    u8  Flags2;
+    u8  Flags3;
+
+    u32 Field08; // 0
+    u32 Field0C; // 2
+    u32 Field10; // 0
+    u32 Field14; // bone count?
+
+    u32 Size;
+
+    if ( Flags1 & 0x04 )
+    {
+        f32 Floats[6];
+    }
+
+    #ifdef NUD
+        FPushBase();
+        {
+            struct TNud Nud;
+        }
+        FPopBase();
+    #else
+        u8 Data[Size];
+    #endif
+
+    u16 PolySetCount;
+    u32 PolySetValues[PolySetCount];
+} TNuccModel;
+
+typedef struct
+{
+    u16 GroupCount;
+    u16 Field02;
+    f32 Field04;
+    u32 FloatFormat;
+
+    struct
+    {
+        if ( FloatFormat & 0x40 ) f32 Bit01Float;
+        if ( FloatFormat & 0x20 ) f32 Bit02Float;
+        if ( FloatFormat & 0x10 ) f32 Bit03Float[2];
+        if ( FloatFormat & 0x04 ) f32 Bit05Float[4];
+        if ( FloatFormat & 0x02 ) f32 Bit06Float[4];
+        if ( FloatFormat & 0x01 ) f32 Bit07Float[4];
+        if ( FloatFormat & 0x08 ) f32 Bit04Float[4];
+    } Floats;
+
+    local u32 i, j;
+    for ( i = 0; i < GroupCount; i++ )
+    {
+        struct
+        {
+            s16 TextureCount;
+            u16 Field22;
+            u32 Field24;
+    
+            u32 TextureChunkIndices[TextureCount];
+    
+            if ( exists( Xfbin ) )
+            {
+                struct
+                {
+                    FPush();
+                    {
+                        for ( j = 0; j < TextureCount; j++ )
+                        {
+                            FSeekRel( startof( Xfbin.ChunkTable.ChunkMaps[GetChunkMapIndex(
+                                TextureChunkIndices[j],
+                                parentof(parentof(parentof(parentof(this)))).pageStart
+                            )] ) );
+                            struct TChunkMap ChunkMap;
+                        }
+                    }
+                    FPop();
+                } TextureChunks;
+            }
+        } TextureGroup;
+    }
+} TNuccMaterial <optimize=false>;
+
+typedef struct
+{
+    u16 SpringGroupsCount;
+    u16 CollisionSpheresCount;
+
+    u32 Unknown;
+
+    local int i, j, bonesCount = 0;
+    for ( i = 0; i < SpringGroupsCount; i++ )
+    {
+        struct
+        {
+            f32 Bounciness;
+            f32 Elasticity;
+            f32 Stiffness;
+            f32 Movement;
+            u16 CoordIndex;
+            u16 BonesCount;
+            bonesCount += BonesCount;
+        } SpringGroup;
+    }
+
+    for ( i = 0; i < CollisionSpheresCount; i++ )
+    {
+        struct
+        {
+            f32 OffsetX;
+            f32 OffsetY;
+            f32 OffsetZ;
+            f32 ScaleX;
+            f32 ScaleY;
+            f32 ScaleZ;
+
+            u16 CoordIndex;
+            u16 AttachSpringGroupFlag;
+
+            s16 Unk;
+            u16 Padding2;
+
+            for ( j = 0; j < AttachSpringGroupFlag; j++ )
+            {
+                u16 AttachedSpringGroupsCount;
+                u16 SpringGroupIndex[AttachedSpringGroupsCount];
+            }
+        } CollisionSphere;
+    }
+
+    u16 SpringBonesFlags[bonesCount];
+} TNuccDynamics <optimize=false>;
+
+typedef struct
+{
+    f32 LocX;
+    f32 LocY;
+    f32 LocZ;
+
+    f32 RotX;
+    f32 RotY;
+    f32 RotZ;
+
+    f32 ScaleX;
+    f32 ScaleY;
+    f32 ScaleZ;
+    f32 UnkFloat;
+
+    if ( parentof(this).Version >= 0x68 )
+    {
+        u16 UnkShort;
+    }
+} TNuccCoord;
+
+typedef struct
+{
+
+// Please ignore the incorrect indentation here in favor of having a cleaner git diff
+if ( parentof(this).Version != 0x79 && parentof(this).Version != 0x7A )
+{
+    u8 Data[parentof(this).Size];
+}
+else
+{
+
+    u32 Field00; // Not always 0
+
+    u16 CoordCount;
+    u8  CoordFlags[2];
+
+    if ( Field00 == 2 )
+    {
+        f16 UnkCoords[14];
+    }
+
+    s16 CoordNodeParents[CoordCount];
+    u32 CoordNodeIndices[CoordCount];
+
+    // This only lists the parents, not the node whose parent is listed
+    local int i;
+    struct
+    {
+        local u32 currentIndex;
+        for ( i = 0; i < CoordCount; i++ )
+        {
+            FPush();
+            {
+                currentIndex = CoordNodeParents[i] < 0 ? 0 : CoordNodeIndices[CoordNodeParents[i]];
+                FSeekRel( startof( Xfbin.ChunkTable.ChunkMaps[GetChunkMapIndex(
+                    i,
+                    parentof(parentof(parentof(this))).pageStart
+                )] ) );
+                struct TChunkMap ChunkMap;
+            }
+            FPop();
+        }
+    } CoordNodeParentsChunks;
+
+    struct
+    {
+        for ( i = 0; i < CoordCount; i++ )
+        {
+            FPush();
+            {
+                FSeekRel( startof( Xfbin.ChunkTable.ChunkMaps[GetChunkMapIndex(
+                    CoordNodeIndices[i],
+                    parentof(parentof(parentof(this))).pageStart
+                )] ) );
+                struct TChunkMap ChunkMap;
+            }
+            FPop();
+        }
+    } CoordNodeIndicesChunks;
+
+    u16 ModelCount;
+    u8  ModelFlags[2]; // Not always 0
+
+    u32 Padding <hidden=true>; Assert( Padding == 0 );
+    u32 ModelIndices[ModelCount];
+
+    struct
+    {
+        for ( i = 0; i < ModelCount; i++ )
+        {
+            FPush();
+            {
+                FSeekRel( startof( Xfbin.ChunkTable.ChunkMaps[GetChunkMapIndex(
+                    ModelIndices[i],
+                    parentof(parentof(parentof(this))).pageStart
+                )] ) );
+                struct TChunkMap ChunkMap;
+            }
+            FPop();
+        }
+    } ModelIndicesChunks;
+
+    do
+    {
+        struct TNuccClumpModelGroup ModelGroup;
+    } while ( ModelGroup.Count != -1 && (FTell() - startof(this)) < parentof(this).Size );
+
+}
+} TNuccClump <optimize=false>;
+
+typedef struct
+{
+    s16 Count;
+
+    if ( Count != -1 && (FTell() - startof(parentof(this))) < parentof(parentof(this)).Size )
+    {
+        u8 Flags[2];
+
+        s8  Unk[4];
+        s32 Indices[Count];
+
+        struct
+        {
+            local u32 currentIndex;
+            for ( i = 0; i < Count; i++ )
+            {
+                FPush();
+                {
+                    currentIndex = Indices[i];
+                    if ( currentIndex == -1 )
+                        currentIndex = 0;
+
+                    FSeekRel( startof( Xfbin.ChunkTable.ChunkMaps[GetChunkMapIndex(
+                        currentIndex,
+                        parentof(parentof(parentof(parentof(this)))).pageStart
+                    )] ) );
+                    struct TChunkMap ChunkMap;
+                }
+                FPop();
+            }
+        } ModelGroupChunks;
+    }
+} TNuccClumpModelGroup;
+
+typedef struct
+{
+    struct Header
+    {
+       u32 MeshCount;
+       u32 FileSize;
+
+    } HitHeader <bgcolor=0xc01b7b>;
+    
+    
+    local int i, j;
+    for (i = 0; i < HitHeader.MeshCount; i++)
+    {
+        struct VertexSection
+        {
+            struct MeshHeader
+            {
+                u32 VertexSectionSize;
+                u16 FootEffect1;
+                u16 FootEffect2;
+
+                if (ReadInt64() == 0) 
+                {
+                    FSkip(8);
+                }
+                else 
+                {
+                    FSkip(0);
+                }
+
+            } meshHeader;
+
+            for (j = 0; j < meshHeader.VertexSectionSize * 0x3; j++)
+            {
+                struct Vertex
+                {
+                    f32 x;
+                    f32 y;
+                    f32 z;
+                } vertex <bgcolor=0xFFDF35>;
+            }
+
+
+        } Mesh <bgcolor=0xFFCF36>;
+    
+    }
+                       
+} TNuccModelHit;
+
+typedef struct
+{
+    s32 ClumpID;
+    s32 MaterialID;
+    s32 PrimitiveVertexChunkID;
+    u32 Padding;
+    u16 EntryCount;
+    u16 unk2;
+    u8 unknowndata[16];
+    u32 ShaderID;
+    u32 unk3;
+    u32 unk4;
+    f32 unkfloat;
+    struct
+    {
+        u32 EntryID;
+        u32 UnkValues;
+        u32 Padding;
+    }Entries[EntryCount];
+        
+                       
+} TNuccModelPremitiveBatch;
+
+typedef struct
+{
+    u32 unk;
+    u32 unk2;
+    u32 VertexSize;
+    u32 VertexCount;
+    local int i;
+    for (i = 0; i < VertexCount; i++)
+    {
+        struct{
+            struct{
+                f32 Pos_X;
+                f32 Pos_Y;
+                f32 Pos_Z;
+                u32 Padding;
+            }VertexPosition;
+            struct{
+                f32 Normal_X;
+                f32 Normal_Y;
+                f32 Normal_Z;
+                u32 Padding;
+            }VertexNormal;
+            struct{
+                f32 R;
+                f32 G;
+                f32 B;
+                f32 A;
+            }VertexColor;
+            struct{
+                f32 U;
+                f32 V;
+                u64 Padding;
+            }VertexUV;
+        }VertexStruct;
+    }
+} TNuccPrimitiveVertex;
+
+
+typedef struct
+{
+    u32 ModelIndex;
+                  
+} TNuccbillboard;
+
+typedef struct
+{
+
+    if (parentof(this).Version > 0x73 && parentof(this).Version < 0x76)
+    {
+        u16 Unk1; //Increasing this value requires you to add 2 more bytes in the header
+        u16 MaterialFlags;
+    
+        u16 Attributes;
+        u8 unk1;
+        u8 unk2;
+        u32 ClumpID;
+        u32 HitID;
+        s32 MeshBoneID;
+        u32 NUDSize;
+        u16 LightCategoryFlag;
+        u8 RenderLayer;
+        u8 LightModeID;
+        
+    }
+    else
+    {
+        u16 Unk1; //Increasing this value requires you to add 2 more bytes in the header
+        u16 MaterialFlags;
+    
+        u16 Attributes;
+        u8 RenderLayer;
+        u8 LightModeID;
+        
+        {u32 LightCategoryFlag;}
+    
+        u32 ClumpID;
+        u32 HitID;
+        s32 MeshBoneID;
+        u32 NUDSize;
+    }
+
+    if (Attributes & 0x4)
+            {f32 BoundingBox[6];}
+        
+        u8 NUD[NUDSize];
+        u16 MaterialCount;
+        u32 MaterialIDs[MaterialCount];
+     
+} TNuccModelChunk;

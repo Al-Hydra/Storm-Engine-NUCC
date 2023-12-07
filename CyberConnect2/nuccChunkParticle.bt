@@ -1,0 +1,162 @@
+//------------------------------------------------
+//--- 010 Editor v10.0.2 Binary Template
+//
+//      File: nuccChunkAnm.bt
+//   Authors: SutandoTsukai181
+//   Version: 1.0
+//   Purpose: Contains structs for parsing nuccChunks inside Xfbin files
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//   1.0 - Initial release
+//------------------------------------------------
+
+#include "/../include.h";
+
+typedef struct
+{
+    if (parentof(this).Version != 0x79)
+    {
+        u8 Data[parentof(this).Size] <comment = "Particle template works only with 0x79 Chunk version">;
+    }
+    else
+    {
+
+        struct{
+            u32 Position; //Was never used
+            u16 EntryCount;
+            u16 EntrySize; 
+        }ParticleHeaders[5];
+        struct{
+            struct{
+                local int l;
+                for (l = 0; l < ParticleHeaders[0].EntryCount; l++){
+                    struct{
+                        u32 ChunkMapID_Animation;
+                        u32 EntryID;
+                        FSkip(0x08);
+                        u8 StretchLoop; //00 = Stretching particles during animation, 01 = blowing all particles at once
+                        u8 AttachmentType; //Not sure exactly for what it was used, but if unsure, use 0x00
+                        u8 BlowoutDisabler; //No idea how I can call, it but blowout value stopped worked when i used higher value (0x05 for example)
+                        u8 AttachToBone; //0 = False, 1 = True
+                        u8 RandomRoll; //0 = False, 1 = True, 2 = Same as False???
+                        u8 FrameRate; // Not sure tbh, smaller value = slower animation. Default value is 30, so i assumed it was related to frame rate
+                        u8 unk1; 
+                        u8 unk2; //It was "EntryType" before, idk why it was called like that
+                        FSkip(0x2);
+                        u8 unkFlag;
+                        u8 StartTime;
+                        int16 EndTime; //0xFFFF will be endless for animation
+                        u16 unk;
+                        f32 ParticleCount;
+                        f32 SpawnRadiusStart;
+                        f32 SpawnRadiusEnd;
+                        u16 FadeTime;
+                        FSkip(0x2);
+                        f32 FadeTime2; //It's almost same as regular FadeTime, but slightly different. Usually just 0 or 1
+                        f32 Blowout; //Can be used even with AttachToBone, but it will be shaky. I don't recommend to use it with AttachToBone enabled
+                        struct{
+                            f32 Rotation_W;
+                            f32 Rotation_X;
+                            f32 Rotation_Y;
+                            f32 Rotation_Z;
+                        }RotationWXYZ;
+                        f32 unk3; 
+                        f32 Transparency;
+                        f32 unk4; //Could be related to Transparency, but no idea
+                        f32 unk5; //Could be related to Transparency, but no idea
+                        f32 unk6; //Could be related to Transparency as blend value, but no idea
+                        struct{
+                            struct{
+                                f32 Scale_X;
+                                f32 Scale_Y;
+                                f32 Scale_Z;
+                            }AnimationScale[3];
+                            struct{
+                                f32 Scale_X;
+                                f32 Scale_Y;
+                                f32 Scale_Z;
+                            }DefaultScale;
+                        }ParticleScale;
+                        f32 BlendScaleValue; //less value will blend scale mainly with 1st and 2nd scales, bigger value will blend scale mainly with 2nd and 3rd scales
+                        struct{
+                            local int l;
+                            for (l = 0; l < 3; l++){
+                                struct{
+                                    float R_channel;
+                                    float G_channel;
+                                    float B_channel;
+                                    float A_channel;
+                                    
+                                    local int bgcolor_particle = (R_channel * 0xFF) + (G_channel * 0xFF) * 0x100 + (B_channel * 0xFF) * 0x10000;
+                                }AnimationColor <bgcolor=bgcolor_particle>;
+                            }
+                            
+                        }ParticleColor; //GradientColor
+                        float BlendColorValue; //less value will blend color mainly with 2nd and 3rd colors, bigger value will blend color mainly with 1st and 2nd colors
+                        FSkip(0x0C); //did nothing at all
+                    }ParticleSettings;
+                }
+            }ParticleSetting;
+            struct{
+                local int j;
+                for (j = 0; j<ParticleHeaders[1].EntryCount; j++)
+                {
+                    struct{
+                        u32 ChunkMapID_Effect;
+                        u32 ParticleEntryID;
+                        FSkip(0x08);
+                        int16 unk1;
+                        int16 unk2;
+                        FSkip(0x08);
+                        u32 ChunkMapID_Type;  // 01 = nuccChunkClump, 02 = nuccChunkAnm, 05 = nuccChunkBillboard
+                        
+                        local string chunkType = "";
+                        switch ( ChunkMapID_Type )
+                        {
+                            case 1:
+                                chunkType = "nuccChunkClump";
+                                break;
+                            case 2:
+                                chunkType = "nuccChunkAnm";
+                                break;
+                            case 5:
+                                chunkType = "nuccChunkBillboard";
+                                break;
+                        }
+                    }ParticleMaterialEntry <comment=chunkType>;
+                }
+            }ParticleMaterial;
+            
+            
+            struct{
+                u32 ChunkMapID_Coord;
+                u32 ParticleEntryID;
+                u32 unk1;
+                u32 unk2;
+                u32 unk3;
+                float unk4;
+                float unk5;
+                u32 unk6;
+                u32 unk7;
+                u32 unk8;
+                u32 unk9;
+                u32 unk10;
+                u32 ChunkMapID_Clump;
+                u32 unk12;
+                        
+            }ParticleBones[ParticleHeaders[2].EntryCount];
+    
+            struct{
+                byte Data[0x70];
+                        
+            }Particle4thHeader[ParticleHeaders[3].EntryCount];
+            
+            struct{
+                byte Data[0x8]; //always same
+            }ParticleTimelines[ParticleHeaders[4].EntryCount];
+        }ParticleHeaderEntries;
+    }
+} TNuccParticle;
+

@@ -1,0 +1,36 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: nuccChunkFont.bt
+//   Authors: HydraBladeZ
+//   Version: 1.0
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct{
+    uint NFH_ChunkSize;
+    uint NUT_ChunkSize;
+    
+    
+    byte NFH_Data[NFH_ChunkSize];
+    
+    struct TNut NUT;
+    
+    typedef struct{
+    char magic[4];
+    
+    int FontIndex;
+    int CharacterCount;
+    int unk3;
+    char FontName[32];
+    char FontType[32];
+    
+    short unk4;
+    short unk5;
+    }NFH;
+
+}TnuccFont;

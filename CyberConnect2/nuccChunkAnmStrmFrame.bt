@@ -1,0 +1,252 @@
+//------------------------------------------------
+//--- 010 Editor v11.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "/../include.h";
+
+
+
+typedef struct
+{
+    struct TAnmCoord Coord;
+
+    u16 EntryFormat;
+    u16 EntrySize;
+	u32 unk;
+
+    local int i;
+
+    struct
+	{
+        if (EntryFormat == 1){ //Bone Entry
+            struct{
+                f32 Position_X;
+                f32 Position_Y;
+                f32 Position_Z;
+            } Position;
+            struct{
+                f32 QuaternionW;
+                f32 QuaternionX;
+                f32 QuaternionY;
+                f32 QuaternionZ;
+            } Rotation;
+            struct{
+                f32 Scale_X;
+                f32 Scale_Y;
+                f32 Scale_Z;
+            } Scale;
+            f32 Toggle_Opacity;
+
+        }
+        else if (EntryFormat == 2){ //Camera Entry
+            struct{
+                f32 Position_X;
+                f32 Position_Y;
+                f32 Position_Z;
+            } Position;
+            struct{
+                f32 QuaternionW;
+                f32 QuaternionX;
+                f32 QuaternionY;
+                f32 QuaternionZ;
+            } Rotation;
+            f32 Camera_FOV;
+            f32 unk1;
+            f32 unk2;
+            f32 unk3;
+
+        }
+        else if (EntryFormat == 4){ //Material Entry
+            f32 MaterialValue_1; //possibly related to UV coords
+            f32 MaterialValue_2; //possibly related to UV coords
+            f32 MaterialValue_3;
+            f32 MaterialValue_4;
+            f32 MaterialValue_5;
+            f32 MaterialValue_6;
+            f32 MaterialValue_7;
+            f32 MaterialValue_8;
+            f32 MaterialValue_9; //possibly related to UV coords
+            f32 MaterialValue_10; //possibly related to UV coords
+            f32 MaterialValue_11;
+            f32 MaterialValue_12;
+            f32 MaterialValue_13;
+            f32 MaterialValue_14;
+            f32 MaterialValue_15;
+            f32 MaterialValue_16;
+                
+        }
+		else if (EntryFormat == 5){ //LightDirc Entry
+            struct{
+                f32 Color_R;
+                f32 Color_G;
+                f32 Color_B;
+            } HEX_Color;
+            f32 Light_strength;
+            struct{
+                f32 QuaternionW;
+                f32 QuaternionX;
+                f32 QuaternionY;
+                f32 QuaternionZ;
+            } Rotation;
+        }
+        else if (EntryFormat == 6){ //LightPoint Entry
+            struct{
+                f32 Color_R;
+                f32 Color_G;
+                f32 Color_B;
+            } HEX_Color;
+            struct{
+                f32 Position_X;
+                f32 Position_Y;
+                f32 Position_Z;
+            } Position;
+            struct{
+                f32 Light_strength;
+                f32 Light_Radius1;
+                f32 Light_Radius2;
+            } LightSettings;
+        }
+        else if (EntryFormat == 8){ //Ambient Entry
+            struct{
+                f32 Color_R;
+                f32 Color_G;
+                f32 Color_B;
+            } HEX_Color;
+            f32 Light_strength;
+        }
+	} TAnmFrameCurve;
+} TNuccAnmStrmFrame <optimize=false>;
+
+
+
+
+typedef struct {
+	
+	
+	
+	local int i;
+	local int Format;
+	
+	struct
+    {
+	    u16 ClumpIndex;
+	    u16 CoordIndex;
+    
+    } AnmCoord;
+	
+	u16 CurveFormat;
+	u16 CurveSize;
+	u32 unk;
+    Format = CurveFormat;
+	
+	// Curve
+	struct
+	{
+        if (Format == 1){ //Bone Entry
+            struct{
+                f32 Position_X;
+                f32 Position_Y;
+                f32 Position_Z;
+            } Position;
+            struct{
+                f32 QuaternionW;
+                f32 QuaternionX;
+                f32 QuaternionY;
+                f32 QuaternionZ;
+            } Rotation;
+            struct{
+                f32 Scale_X;
+                f32 Scale_Y;
+                f32 Scale_Z;
+            } Scale;
+            f32 Toggle_Opacity;
+
+        }
+        else if (Format == 2){ //Camera Entry
+            struct{
+                f32 Position_X;
+                f32 Position_Y;
+                f32 Position_Z;
+            } Position;
+            struct{
+                f32 QuaternionW;
+                f32 QuaternionX;
+                f32 QuaternionY;
+                f32 QuaternionZ;
+            } Rotation;
+            f32 Camera_FOV;
+            f32 unk1;
+            f32 unk2;
+            f32 unk3;
+
+        }
+        else if (Format == 4){ //Material Entry
+            f32 MaterialValue_1; //possibly related to UV coords
+            f32 MaterialValue_2; //possibly related to UV coords
+            f32 MaterialValue_3;
+            f32 MaterialValue_4;
+            f32 MaterialValue_5;
+            f32 MaterialValue_6;
+            f32 MaterialValue_7;
+            f32 MaterialValue_8;
+            f32 MaterialValue_9; //possibly related to UV coords
+            f32 MaterialValue_10; //possibly related to UV coords
+            f32 MaterialValue_11;
+            f32 MaterialValue_12;
+            f32 MaterialValue_13;
+            f32 MaterialValue_14;
+            f32 MaterialValue_15;
+            f32 MaterialValue_16;
+                
+        }
+		else if (Format == 5){ //LightDirc Entry
+            struct{
+                f32 Color_R;
+                f32 Color_G;
+                f32 Color_B;
+            } HEX_Color;
+            f32 Light_strength;
+            struct{
+                f32 QuaternionW;
+                f32 QuaternionX;
+                f32 QuaternionY;
+                f32 QuaternionZ;
+            } Rotation;
+        }
+        else if (Format == 6){ //LightPoint Entry
+            struct{
+                f32 Color_R;
+                f32 Color_G;
+                f32 Color_B;
+            } HEX_Color;
+            struct{
+                f32 Position_X;
+                f32 Position_Y;
+                f32 Position_Z;
+            } Position;
+            struct{
+                f32 Light_strength;
+                f32 Light_Radius1;
+                f32 Light_Radius2;
+            } LightSettings;
+        }
+        else if (Format == 8){ //Ambient Entry
+            struct{
+                f32 Color_R;
+                f32 Color_G;
+                f32 Color_B;
+            } HEX_Color;
+            f32 Light_strength;
+        }
+	} TCurve;
+} TFrame;
+
