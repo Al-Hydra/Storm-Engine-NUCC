@@ -1,5 +1,5 @@
 # 010-Editor-Binary-Templates
-Some [010 Editor](https://www.sweetscape.com/010editor/) binary templates I made.
+Some [010 Editor](https://www.sweetscape.com/010editor/) binary templates, originally made by SutandoTsuaki181.
 
 # Installation
 Clone the repository and add each template to 010 Editor manually, as desired.
