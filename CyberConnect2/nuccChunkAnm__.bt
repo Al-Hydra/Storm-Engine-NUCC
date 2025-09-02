@@ -24,88 +24,44 @@ typedef struct
     {*/
 
     u32 AnmLength;
-    if (parentof(this).Version > 101)
-    {
     u32 FrameSize; //Assert( FrameSize == 0x64 );  // Each frame is 100 units
-        }
-    
+
     u16 EntryCount;
-    u16 LoopFlag;
+    u16 Field0A;
     u16 ClumpCount;
     u16 OtherEntryCount;
-    s16 unkFlag;
+
+    u16 OtherCoordCount;
     u16 CoordCount;
 
     local int i;
 
-    struct{
     for (i = 0; i < ClumpCount; i++)
+    {
+        struct
         {
-            struct
-            {
-                u32 ClumpIndex;
-                u16 BoneMaterialCount;
-                u16 ModelCount;
-                
-                local int bm;
-                struct
-                {
-                    for (bm=0; bm<BoneMaterialCount; bm++)
-                    {
-                        struct{
-                            u32 BoneMaterialIndex;
-                        }ClumpChild <read = ReadTClumpChild(this.BoneMaterialIndex, parentof(parentof(parentof(parentof(this)))))>;
-                    }
-                }BoneMaterialIndices;
-                
-                local int m;
-                struct
-                {
-                    for (m=0; m<ModelCount; m++)
-                    {
-                        struct{
-                            u32 ModelIndex;
-                        }Model <read = ReadTClumpChild(this.ModelIndex, parentof(parentof(parentof(parentof(this)))))>;
-                    }
-                }ModelIndices;
-            } Clump <read= ReadTClump(this.ClumpIndex, parentof(parentof(this)))>;
-        }
-    }Clumps;
-    
+            u32 ClumpIndex;
+            u16 BoneMaterialCount;
+            u16 ModelCount;
+            u32 BoneMaterialIndices[BoneMaterialCount];
+            u32 ModelIndices[ModelCount];
+        } Clumps;
+    }
 
     u32 OtherEntryChunkIndices[OtherEntryCount];
 
     // This is bones parents: first u32 is parent, second u32 is child (or current bone)
-    struct
-    {
-        
-        for (i = 0; i < CoordCount; i++)
-        {
-            struct 
-            {   
-                
-                struct TAnmCoord Parent <read = ReadTAnmCoord(this.ClumpIndex, parentof(parentof(parentof(this))))>;
-                struct TAnmCoord Child <read = ReadTAnmCoord(this.ClumpIndex,  parentof(parentof(parentof(this))))>;
-                
+    struct TCoordParent CoordParents[CoordCount];
+    struct TAnmCoord OtherCoords[OtherCoordCount];
+    struct { struct TEntry Entry[EntryCount]; } Entries;
 
-            }CoordParent <read = Parent1234, optimize= false>;
-            
-        }
-
-    } CoordParents;
-    
-    
-    struct { 
-        struct TEntry Entry[EntryCount] <read = ReadTEntry(this, parentof(parentof(this)))>; 
-        } Entries;
-
-}TNuccAnm;
+    //}
+} TNuccAnm;
 
 typedef struct
 {
     s16 ClumpIndex;
     u16 CoordIndex;
-    
 } TAnmCoord;
 
 typedef struct
@@ -141,8 +97,6 @@ typedef struct
                 case 0x05:
                 case 0x08:
                 case 0x15:
-                case 0x1A:
-                case 0x09:
                     struct TVector3 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
                     break;
                 case 0x06:
@@ -174,19 +128,11 @@ typedef struct
                     }
                     break;
                 case 0x11:
-                case 0x1B:
                     struct TQuatScaled Curve[CurveHeaders[i].FrameCount] <optimize=false>;
                     break;
                 case 0x14:
                     struct TRgb Curve[CurveHeaders[i].FrameCount] <optimize=false>;
                     FSkip(CurveHeaders[i].FrameCount % 4);
-                    break;
-                case 0x1D:
-                    struct TVectorShort Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    if (CurveHeaders[i].FrameCount % 4)
-                    {
-                        FSkip(2);
-                    }
                     break;
             }
         } Curve;
@@ -217,21 +163,8 @@ typedef struct
     s16 X;
     s16 Y;
     s16 Z;
-    
 } TVector3Short <read=ReadTVector3Short>;
 
-typedef struct
-{
-    s16 X;
-} TVectorShort <read=ReadTVectorShort>;
-
-string ReadTVectorShort(TVectorShort& value)
-{
-    local string str;
-    SPrintf(str, "[%.6f]",
-        (float)value.X / 0x1000);
-    return str;
-}
 string ReadTVector3Short(TVector3Short& value)
 {
     local string str;
@@ -299,53 +232,5 @@ string ReadTRgb(TRgb& value)
 {
     local string str;
     SPrintf(str, "[R: %d, G: %d, B: %d]", value.R, value.G, value.B);
-    return str;
-}
-
-
-
-string ReadTClump(u32& value, TNuccAnm& NuccAnm)
-{
-    local string str;
-    str = ReadTExtraMapping(parentof(parentof(parentof(parentof(this)))).ExtraMappings[value]);
-    return str;
-
-}
-
-string ReadTClumpChild(u32& value, TNuccAnm& NuccAnm)
-{
-    local string str;
-    str = ReadTExtraMapping(parentof(parentof(parentof(parentof(parentof(parentof(this)))))).ExtraMappings[value]);
-    return str;
-
-}
-
-// To read the coord, we need to get the clump index from the clumps array, and then it's read mapping string from the extra mappings array
-string ReadTAnmCoord(s16& value, TNuccAnm& NuccAnm)
-{
-    local string str;
-    local s16 ClumpIndex = NuccAnm.Clumps.Clump[value].ClumpIndex;
-    str = ReadTExtraMapping(parentof(parentof(parentof(parentof(parentof(this))))).ExtraMappings[ClumpIndex]);
-    return str;
-}
-
-
-
-string ReadTEntry(TEntry& Entry, TNuccAnm& NuccAnm)
-{
-    local string str;
-    local s16 ClumpIndex = Entry.Coord.ClumpIndex;
-    local u16 CoordIndex = Entry.Coord.CoordIndex;
-
-    if (ClumpIndex == -1)
-    {
-        return "Other Entry";
-    }
-
-    local u32 MappingIndex = NuccAnm.Clumps.Clump[ClumpIndex].BoneMaterialIndices.ClumpChild[CoordIndex].BoneMaterialIndex;
-
-
-
-    str = ReadTExtraMapping(parentof(parentof(parentof(parentof(this)))).ExtraMappings[MappingIndex]);
     return str;
 }

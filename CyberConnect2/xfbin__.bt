@@ -36,7 +36,7 @@ typedef struct
 
     BigEndian();
 
-    u32 Version;
+    u32 FileId;
     u32 Padding[2] <hidden=true>;
     Assert( Padding[0] == 0 && Padding[1] == 0 );
 
@@ -141,25 +141,6 @@ typedef struct( u32 currentPageStart, u32 currentExtraIndicesStart )
 
     local u32 pageSize = Chunk.NuccPage.PageSize;
     local u32 extraIndicesSize = Chunk.NuccPage.ExtraIndicesSize;
-    
-    if ( pageSize )
-    {
-        local int i = 0;
-        local int currentChunkMapIndex;
-        FPush();
-        {
-            SetBackColor( chunkMapIndicesColor );
-            FSeekRel(startof(Xfbin.ChunkTable.ChunkMapIndices[currentPageStart]));
-            u32 ChunkMapIndices[pageSize];
-            for (i = 0; i<pageSize; i++)
-            {
-                currentChunkMapIndex = ChunkMapIndices[i];
-                FSeekRel(startof(Xfbin.ChunkTable.ChunkMaps[currentChunkMapIndex]));
-                struct TChunkMap chunkMap;
-            }
-        }
-        FPop();
-    }
 
     if ( extraIndicesSize )
     {
@@ -216,53 +197,35 @@ typedef struct
         case "nuccChunkMaterial":
             struct TNuccMaterial NuccMaterial;
             break;
-        case "nuccChunkModel":
-            struct TNuccModelChunk NuccModel;
-            break;
-        case "nuccChunkMorphModel":
-            struct TNuccMorphModel NuccMorphModel;
-            break;
-        case "nuccChunkMorphPrimitive":
-            struct TNuccMorphPrimitive NuccMorphPrimitive;
-            break;
-        case "nuccChunkModelVertex":
-            struct TNuccModelVertex NuccModelVertex;
+        case "nuccChunkModelHit":
+            struct TNuccModelHit NuccModelHit;
             break;
         case "nuccChunkAnmStrm":
             struct TNuccAnmStrm NuccAnmStrm;
             break;
-        /*case "nuccChunkAnmStrmFrame":
+        case "nuccChunkAnmStrmFrame":
             struct {
                 u32 Frame;
 	            u16 EntryCount;
                 u16 Unk;
                 struct { struct TNuccAnmStrmFrame Entry[EntryCount]; } Entries;
             } NuccAnmStrmFrame;
-            break;*/
-        /*case "nuccChunkParticle":
+            break;
+        case "nuccChunkParticle":
             struct TNuccParticle NuccParticle;
             u8 Data[Size - (exists(NuccParticle) ? sizeof(NuccParticle) : 0)];
-            break;*/
+            break;
         case "nuccChunkModelPrimitiveBatch":
             struct TNuccModelPremitiveBatch NuccModelPremitiveBatch;
             break;
         case "nuccChunkPrimitiveVertex":
             struct TNuccPrimitiveVertex NuccPrimitiveVertex;
             break;
-        case "nuccChunkModelHit":
-            struct TNuccModelHit ModelHit;
+        case "nuccChunkModel":
+            struct TNuccModelChunk NuccModelChunk;
             break;
         case "nuccChunkFont":
             struct TnuccFont NuccFont;
-            break;
-        case "nuccChunkBillboard":
-            struct TNuccChunkBillboard NuccBillboard;
-            break;
-        case "nuccChunkLightDirc":
-            struct LightDirc LightDirection;
-            break;
-        case "nuccChunkLightPoint":
-            struct LightPoint Light_Point;
             break;
         default:
             u8 Data[Size];
@@ -356,6 +319,7 @@ string ReadTPage( struct TPage& value )
 
 string ReadTChunk( struct TChunk& value )
 {
+
     if ( value.readString == "" )
     {
         local string name = ReadTChunkMapName( Xfbin.ChunkTable.ChunkMaps[GetChunkMapIndex( value.ChunkMapIndex, parentof(value).pageStart )] );
@@ -373,13 +337,3 @@ string ReadTString( struct TString& value )
 }
 
 TXfbin Xfbin;
-/*
-string ReadTExtraMapping( struct TExtraMapping& value )
-{
-    local string str = "";
-    local string name = ReadChunkNameIndex( value.ChunkNameIndex );
-
-    if ( name != "" ) SPrintf( str, "%s [%s]", name, ReadTChunkMap(Xfbin.ChunkTable.ChunkMaps[value.ChunkMapIndex]) );
-    return str;
-}
-*/

@@ -1,0 +1,44 @@
+//------------------------------------------------
+//--- 010 Editor v10.0.2 Binary Template
+//
+//      File: nuccChunkAnm.bt
+//   Authors: SutandoTsukai181
+//   Version: 1.0
+//   Purpose: Contains structs for parsing nuccChunks inside Xfbin files
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//   1.0 - Initial release
+//------------------------------------------------
+
+#include "/../include.h";
+
+typedef struct
+{
+    u32 unk1;
+    u32 unk2;
+    u32 unk3;
+    u32 unk4;
+    u16 EntryCount;
+    u16 unk5;
+    u32 unk6;
+    u16 unk7;
+    u16 unk8;
+    u32 unk9;
+    u32 unk10;
+    u32 Shader_ID;
+    u32 unk11;
+    u32 unk12;
+    u32 unk13;
+
+    struct{
+        struct{
+            u32 EntryID;
+            u32 unk1;
+            u32 unk2;
+            
+        }Entry[EntryCount];  
+    }Entries;
+
+} TNuccModelPrimitiveBatch;

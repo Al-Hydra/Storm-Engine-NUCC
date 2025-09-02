@@ -16,7 +16,7 @@
 
 typedef struct
 {
-    if (parentof(this).Version != 0x79)
+    if (parentof(this).Version != 0x79 && parentof(this).Version != 0x7A & parentof(this).Version != 0x7B)
     {
         u8 Data[parentof(this).Size] <comment = "Particle template works only with 0x79 Chunk version">;
     }
@@ -38,7 +38,7 @@ typedef struct
                         FSkip(0x08);
                         u8 StretchLoop; //00 = Stretching particles during animation, 01 = blowing all particles at once
                         u8 AttachmentType; //Not sure exactly for what it was used, but if unsure, use 0x00
-                        u8 BlowoutDisabler; //No idea how I can call, it but blowout value stopped worked when i used higher value (0x05 for example)
+                        u8 BlowoutDisabler; //No idea how I can call, it but blowout value stopped working when i used higher value (0x05 for example)
                         u8 AttachToBone; //0 = False, 1 = True
                         u8 RandomRoll; //0 = False, 1 = True, 2 = Same as False???
                         u8 FrameRate; // Not sure tbh, smaller value = slower animation. Default value is 30, so i assumed it was related to frame rate
@@ -107,13 +107,15 @@ typedef struct
                         u32 ChunkMapID_Effect;
                         u32 ParticleEntryID;
                         FSkip(0x08);
-                        int16 unk1;
-                        int16 unk2;
-                        FSkip(0x08);
-                        u32 ChunkMapID_Type;  // 01 = nuccChunkClump, 02 = nuccChunkAnm, 05 = nuccChunkBillboard
+                        //s16 unk1; 
+                        //s16 unk2;
+                        struct TVector2Short unk1 <optimize=false>;
+                        struct TVector2Short unk2 <optimize=false>;
+                        struct TVector2Short unk3 <optimize=false>;
+                        u32 ChunkMap_Type;  // 01 = nuccChunkClump, 02 = nuccChunkAnm, 05 = nuccChunkBillboard
                         
                         local string chunkType = "";
-                        switch ( ChunkMapID_Type )
+                        switch ( ChunkMap_Type )
                         {
                             case 1:
                                 chunkType = "nuccChunkClump";
@@ -154,9 +156,48 @@ typedef struct
             }Particle4thHeader[ParticleHeaders[3].EntryCount];
             
             struct{
-                byte Data[0x8]; //always same
-            }ParticleTimelines[ParticleHeaders[4].EntryCount];
+                local int j;
+                local int x;
+                local int entry_size = 4;
+                for (j = 0; j<ParticleHeaders[4].EntryCount; j++)
+                {
+                    entry_size = 0;
+                    struct{
+                        int TimeEntryCount;
+                        for (x = 0; x < TimeEntryCount; x++){
+    
+                            struct{
+                                u16 ParticleEnabler;
+                                u16 Timing;
+                                local string isEnabled = "???";
+                                if (ParticleEnabler != 0){
+                                    isEnabled = "ENABLED";
+                                }
+                                else{
+                                    isEnabled = "DISABLED";
+                                }
+                            }TimeEntry <comment=isEnabled>;
+                            entry_size = entry_size + 4;
+                        }
+                       
+                        FSkip((4 + (TimeEntryCount * 4)) % 8);
+                    }TimeEntries;
+                }
+            }ParticleTimelines;
         }ParticleHeaderEntries;
     }
 } TNuccParticle;
+typedef struct
+{
+    s16 value1;
+    s16 value2;
+} TVector2Short <read=ReadTVector2Short>;
 
+string ReadTVector2Short(TVector2Short& value)
+{
+    local string str;
+    SPrintf(str, "[%.6f, %.6f]",
+        (float)value.value1 / 0x1000,
+        (float)value.value2 / 0x1000);
+    return str;
+}

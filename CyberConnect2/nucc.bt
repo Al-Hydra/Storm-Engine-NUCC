@@ -19,14 +19,17 @@
 #include "nuccChunkAnm.bt"
 #include "nuccChunkAnmStrm.bt"
 #include "nuccChunkAnmStrmFrame.bt"
-#include "nuccChunkParticle.bt"
 #include "nuccChunkFont.bt"
+#include "nuccChunkBillboard.bt"
 #include "nut.bt"
 
+
+local uint currentPageIndex = 0;
 typedef struct
 {
     u32 PageSize;
     u32 ExtraIndicesSize;
+
 } TNuccPage;
 
 typedef struct
@@ -51,57 +54,80 @@ typedef struct
 
 typedef struct
 {
-    u16 Field00;
-    u16 Field02;
+    u16 morphTargetCount;
+    u16 flags;
+    s32 modelIndex;
+    f32 value;
+    struct{
+        s32 targetIndex;
+        f32 value;
+    }targets[morphTargetCount];
+    
+} TNuccMorphModel;
 
-    u8  Flags0;
-    u8  Flags1;
-    u8  Flags2;
-    u8  Flags3;
+typedef struct
+{
+    u16 morphTargetCount;
+    u16 flags;
+    s32 modelIndex;
+    s32 batchIndex;
+    f32 value;
+    struct{
+        s32 targetIndex;
+        f32 value;
+        s32 unk;
+    }targets[morphTargetCount];
+        
+} TNuccMorphPrimitive;
 
-    u32 Field08; // 0
-    u32 Field0C; // 2
-    u32 Field10; // 0
-    u32 Field14; // bone count?
-
-    u32 Size;
-
-    if ( Flags1 & 0x04 )
-    {
-        f32 Floats[6];
-    }
-
-    #ifdef NUD
-        FPushBase();
-        {
-            struct TNud Nud;
-        }
-        FPopBase();
-    #else
-        u8 Data[Size];
-    #endif
-
-    u16 PolySetCount;
-    u32 PolySetValues[PolySetCount];
-} TNuccModel;
+typedef struct
+{
+    u32 modelSize;
+    u8 model[modelSize];
+} TNuccModelVertex;
 
 typedef struct
 {
     u16 GroupCount;
-    u16 Field02;
-    f32 Field04;
-    u32 FloatFormat;
+    u16 Alpha;
+    f32 Glare;
+    u32 MaterialFlags;
 
-    struct
+    if ( MaterialFlags & 0x01 )
     {
-        if ( FloatFormat & 0x40 ) f32 Bit01Float;
-        if ( FloatFormat & 0x20 ) f32 Bit02Float;
-        if ( FloatFormat & 0x10 ) f32 Bit03Float[2];
-        if ( FloatFormat & 0x04 ) f32 Bit05Float[4];
-        if ( FloatFormat & 0x02 ) f32 Bit06Float[4];
-        if ( FloatFormat & 0x01 ) f32 Bit07Float[4];
-        if ( FloatFormat & 0x08 ) f32 Bit04Float[4];
-    } Floats;
+    struct{
+        f32 uvOffset0[4];
+        }uvOffset0 <read = Str("(%f, %f, %f, %f)",this.uvOffset0[0],this.uvOffset0[1],this.uvOffset0[2],this.uvOffset0[3])>;
+    }
+    if ( MaterialFlags & 0x02 )
+    {
+        struct{
+            f32 uvOffset1[4];
+        }uvOffset1 <read = Str("(%f, %f, %f, %f)",this.uvOffset1[0],this.uvOffset1[1],this.uvOffset1[2],this.uvOffset1[3])>;
+    }
+    
+    if ( MaterialFlags & 0x04 )
+    {
+        struct{
+            f32 uvOffset2[4];
+        }uvOffset2 <read = Str("(%f, %f, %f, %f)",this.uvOffset2[0],this.uvOffset2[1],this.uvOffset2[2],this.uvOffset2[3])>;
+    }
+    
+    if ( MaterialFlags & 0x08 )
+    {
+        struct{
+            f32 uvOffset3[4];
+        }uvOffset3 <read = Str("(%f, %f, %f, %f)",this.uvOffset3[0],this.uvOffset3[1],this.uvOffset3[2],this.uvOffset3[3])>;
+    }
+    
+    if ( MaterialFlags & 0x10 )
+    {
+        struct{
+            f32 blendRate[2];
+        }blendRate <read = Str("(%f, %f)",this.blendRate[0],this.blendRate[1])>;
+    }
+    if ( MaterialFlags & 0x20 ) f32 falloff;
+    if ( MaterialFlags & 0x40 ) f32 outlineID;
 
     local u32 i, j;
     for ( i = 0; i < GroupCount; i++ )
@@ -141,7 +167,7 @@ typedef struct
     u16 SpringGroupsCount;
     u16 CollisionSpheresCount;
 
-    u32 Unknown;
+    u32 ClumpChunkIndex;
 
     local int i, j, bonesCount = 0;
     for ( i = 0; i < SpringGroupsCount; i++ )
@@ -162,12 +188,12 @@ typedef struct
     {
         struct
         {
-            f32 OffsetX;
-            f32 OffsetY;
             f32 OffsetZ;
-            f32 ScaleX;
-            f32 ScaleY;
+            f32 OffsetY;
+            f32 OffsetX;
             f32 ScaleZ;
+            f32 ScaleY;
+            f32 ScaleX;
 
             u16 CoordIndex;
             u16 AttachSpringGroupFlag;
@@ -225,7 +251,8 @@ else
 
     if ( Field00 == 2 )
     {
-        f16 UnkCoords[14];
+        f32 BoundingBox[6];
+        u32 unkBB;
     }
 
     s16 CoordNodeParents[CoordCount];
@@ -305,7 +332,7 @@ typedef struct
     {
         u8 Flags[2];
 
-        s8  Unk[4];
+        f32 lodThreshold;
         s32 Indices[Count];
 
         struct
@@ -336,7 +363,7 @@ typedef struct
     struct Header
     {
        u32 MeshCount;
-       u32 FileSize;
+       u32 TrianglesCount;
 
     } HitHeader <bgcolor=0xc01b7b>;
     
@@ -348,29 +375,26 @@ typedef struct
         {
             struct MeshHeader
             {
-                u32 VertexSectionSize;
-                u16 FootEffect1;
-                u16 FootEffect2;
+                u32 TrianglesCount;
+                u32 Flags <format = hex>;
 
-                if (ReadInt64() == 0) 
+                if (parentof(parentof(parentof(this))).Version > 0x79) 
                 {
                     FSkip(8);
-                }
-                else 
-                {
-                    FSkip(0);
                 }
 
             } meshHeader;
 
-            for (j = 0; j < meshHeader.VertexSectionSize * 0x3; j++)
+            for (j = 0; j < meshHeader.TrianglesCount; j++)
             {
-                struct Vertex
-                {
-                    f32 x;
-                    f32 y;
-                    f32 z;
-                } vertex <bgcolor=0xFFDF35>;
+                struct{
+                    struct
+                    {
+                        f32 x;
+                        f32 y;
+                        f32 z;
+                    } Vertices[3] <bgcolor=0xFFDF35>;
+                }Triangle;
             }
 
 
@@ -386,71 +410,160 @@ typedef struct
     s32 MaterialID;
     s32 PrimitiveVertexChunkID;
     u32 Padding;
-    u16 EntryCount;
+    u16 meshCount;
+    u16 vertexChunkCount;
+    u32 unk1;
     u16 unk2;
-    u8 unknowndata[16];
-    u32 ShaderID;
-    u32 unk3;
+    u16 unk3;
     u32 unk4;
-    f32 unkfloat;
+    //u8 unknowndata[16];
+    u32 unk5;
+    u32 ShaderID <format = hex>;
+    u32 unk6;
+    u32 unk7;
+    f32 unk8;
     struct
     {
         u32 EntryID;
-        u32 UnkValues;
-        u32 Padding;
-    }Entries[EntryCount];
+        u32 VertexCount;
+        u32 padding;
+    }VertexChunks[meshCount];
         
                        
 } TNuccModelPremitiveBatch;
 
 typedef struct
 {
-    u32 unk;
-    u32 unk2;
+    u32 BatchChunkIndex;
+    u32 VertexType;
     u32 VertexSize;
     u32 VertexCount;
     local int i;
-    for (i = 0; i < VertexCount; i++)
+    switch (VertexType)
     {
-        struct{
+        case 0:
+
+            for (i = 0; i < VertexCount; i++)
+            {
+                struct{
+                    struct{
+                        f32 Pos_X;
+                        f32 Pos_Y;
+                        f32 Pos_Z;
+                        u32 Padding;
+                    }VertexPosition;
+                    struct{
+                        f32 Normal_X;
+                        f32 Normal_Y;
+                        f32 Normal_Z;
+                        u32 Padding;
+                    }VertexNormal;
+                    struct{
+                        f32 R;
+                        f32 G;
+                        f32 B;
+                        f32 A;
+                    }VertexColor;
+                    struct{
+                        f32 U;
+                        f32 V;
+                        u64 Padding;
+                    }VertexUV;
+                }VertexStruct;
+            }
+        break;
+        
+        case 1:
+            for (i = 0; i < VertexCount; i++)
+            {
+                struct{
+                    struct{
+                        f32 Pos_X;
+                        f32 Pos_Y;
+                        f32 Pos_Z;
+                        u32 Padding;
+                    }VertexPosition;
+                    struct{
+                        f32 Normal_X;
+                        f32 Normal_Y;
+                        f32 Normal_Z;
+                        u32 Padding;
+                    }VertexNormal;
+                    struct{
+                        f32 U;
+                        f32 V;
+                        u64 Padding;
+                    }VertexUV;
+                }VertexStruct;
+            }
+        break;
+        
+        case 2:
+            
+            for (i = 0; i < VertexCount; i++)
+        {
             struct{
-                f32 Pos_X;
-                f32 Pos_Y;
-                f32 Pos_Z;
-                u32 Padding;
-            }VertexPosition;
+                struct{
+                    f32 Pos_X;
+                    f32 Pos_Y;
+                    f32 Pos_Z;
+                    u32 Padding;
+                }VertexPosition;
+                struct{
+                    f32 R;
+                    f32 G;
+                    f32 B;
+                    f32 A;
+                }VertexColor;
+                struct{
+                    f32 U;
+                    f32 V;
+                    u64 Padding;
+                }VertexUV;
+            }VertexStruct;
+        }
+        break;
+        
+        case 3:
+            
+            for (i = 0; i < VertexCount; i++)
+        {
             struct{
-                f32 Normal_X;
-                f32 Normal_Y;
-                f32 Normal_Z;
-                u32 Padding;
-            }VertexNormal;
-            struct{
-                f32 R;
-                f32 G;
-                f32 B;
-                f32 A;
-            }VertexColor;
-            struct{
-                f32 U;
-                f32 V;
-                u64 Padding;
-            }VertexUV;
-        }VertexStruct;
+                struct{
+                    f32 Pos_X;
+                    f32 Pos_Y;
+                    f32 Pos_Z;
+                    u32 Padding;
+                }VertexPosition;
+                struct{
+                    f32 U;
+                    f32 V;
+                    u64 Padding;
+                }VertexUV;
+            }VertexStruct;
+        }
+        break;
     }
 } TNuccPrimitiveVertex;
 
 
 typedef struct
 {
-    u32 ModelIndex;
-                  
-} TNuccbillboard;
-
-typedef struct
-{
-
-    if (parentof(this).Version > 0x73 && parentof(this).Version < 0x76)
+    if (parentof(this).Version < 0x74)
+    {
+        u16 Unk1; //Increasing this value requires you to add 2 more bytes in the header
+        u16 MaterialFlags;
+    
+        u16 Attributes;
+        u8 RenderLayer;
+        u8 LightModeID;
+        u32 ClumpID;
+        u32 HitID;
+        u32 MeshBoneID;
+        u32 NUDSize;
+        
+    }
+    else if (parentof(this).Version > 0x73 && parentof(this).Version < 0x76)
     {
         u16 Unk1; //Increasing this value requires you to add 2 more bytes in the header
         u16 MaterialFlags;
@@ -492,3 +605,22 @@ typedef struct
         u32 MaterialIDs[MaterialCount];
      
 } TNuccModelChunk;
+
+
+typedef struct
+{
+    f32 unk[4];
+    f32 color[4];
+    f32 unk2[4];
+    f32 rotation[4];
+                       
+} LightDirc;
+
+typedef struct
+{
+    u32 hashes[4];
+    f32 color[4];
+    f32 position[4];
+    f32 parameters[4];
+                       
+} LightPoint;

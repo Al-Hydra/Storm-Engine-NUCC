@@ -1,0 +1,45 @@
+//------------------------------------------------
+//--- 010 Editor v10.0.2 Binary Template
+//
+//      File: nuccChunkAnm.bt
+//   Authors: SutandoTsukai181
+//   Version: 1.0
+//   Purpose: Contains structs for parsing nuccChunks inside Xfbin files
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//   1.0 - Initial release
+//------------------------------------------------
+
+#include "/../include.h";
+
+typedef struct
+{
+    u32 unk1;
+    u32 unk2;
+    u32 EntryLength;
+    u32 EntryCount;
+
+    struct{
+        struct{
+            float Position_X;
+            float Position_Y;
+            float Position_Z;
+            FSkip(4);
+            float Normals_X;
+            float Normals_Y;
+            float Normals_Z;
+            FSkip(4);
+            float Tangent_X;
+            float Tangent_Y;
+            float Tangent_Z;
+            float Scale_X;
+            float Scale_Y;
+            float Scale_Z;
+            FSkip(8);
+            
+        }Vertex[EntryCount];  
+    }Vertexes;
+
+} TNuccPrimitiveVertex;
