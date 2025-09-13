@@ -95,7 +95,7 @@ typedef struct
                             
                         }ParticleColor; //GradientColor
                         float BlendColorValue; //less value will blend color mainly with 2nd and 3rd colors, bigger value will blend color mainly with 1st and 2nd colors
-                        FSkip(0x0C); //did nothing at all
+                        float unknown[3];
                     }ParticleSettings;
                 }
             }ParticleSetting;
@@ -122,6 +122,10 @@ typedef struct
                                 break;
                             case 2:
                                 chunkType = "nuccChunkAnm";
+                                break;
+                            case 3:
+                            case 4:
+                                chunkType = "nuccChunkTexture";
                                 break;
                             case 5:
                                 chunkType = "nuccChunkBillboard";
@@ -180,7 +184,7 @@ typedef struct
                             entry_size = entry_size + 4;
                         }
                        
-                        FSkip((4 + (TimeEntryCount * 4)) % 8);
+                        FSkip((4 + (TimeEntryCount * 4)) % 4);
                     }TimeEntries;
                 }
             }ParticleTimelines;

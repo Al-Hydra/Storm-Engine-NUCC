@@ -2,7 +2,7 @@
 //--- 010 Editor v10.0.2 Binary Template
 //
 //      File: nuccChunkAnm.bt
-//   Authors: SutandoTsukai181
+//   Authors: TheLeonX, Hydra
 //   Version: 1.0
 //   Purpose: Contains structs for parsing nuccChunks inside Xfbin files
 //  Category: 
@@ -14,117 +14,97 @@
 
 #include "/../include.h";
 
-typedef struct
-{
-    local int i;
 
-    struct{
-        u32 Position;
-        u16 EntryCount;
-        u16 EntrySize; //was used for 1st and 5th entries, 2nd and 3rd can be anything. Never was used for 4th 
-    }TrailHeaders[5];
-    struct{
-        struct{
-            u32 ChunkMapID_Animation;
-            u32 EntryID;
-            FSkip(0x0C);
-            u32 FadeTime;
-            u32 unk; //doesn't really do anything
-            u16 unk1; //doesn't really do anything
-            u16 unk2; //doesn't really do anything
-            struct{
-                struct{
-                    float R_channel;
-                    float G_channel;
-                    float B_channel;
-                    float A_channel;
-                }Color[3];
-            }TrailColor; //GradientColor
-            float BlendValue; //less value will blend color mainly with 1st and 2nd, bigger value will blend color mainly with 2nd and 3rd color
-            struct{
-                struct{
-                    u16 FirstBone; 
-                    u16 SecondBone; 
-                }Width[3];
-            }TrailWidth;
-        }TrailSetting_Entry[TrailHeaders[0].EntryCount];
-        struct{
-            u32 ChunkMapID_Billboard;
-            u32 EntryID;
-            FSkip(0x18);
-        }TrailMaterial[TrailHeaders[1].EntryCount];
-        struct{
-            u32 ChunkMapID_Coord;
-            u32 EntryID;
-            FSkip(0x18);
-            u32 ChunkMapID_Clump;
-            FSkip(0xC);
-        }TrailBones[TrailHeaders[2].EntryCount];
-
-
-        struct{
-            local int j;
-            local int x;
-            local int entry_size = 4;
-            for (j = 0; j<TrailHeaders[4].EntryCount; j++)
-            {
-                entry_size = 0;
-                struct{
-                    FSkip(0x4);
-                    u32 EntryID;
-                    FSkip(0x8);
-                    int TimeEntryCount;
-                    for (x = 0; x < TimeEntryCount; x++){
-
-                        struct{
-                            u16 ParticleEnabler;
-                            u16 Timing;
-                            local string isEnabled = "???";
-                            if (ParticleEnabler != 0){
-                                isEnabled = "ENABLED";
-                            }
-                            else{
-                                isEnabled = "DISABLED";
-                            }
-                        }TimeEntry <comment=isEnabled>;
-                        entry_size = entry_size + 4;
-                    }
-                   
-                    FSkip((4 + (TimeEntryCount * 4)) % 8);
-                }TimeEntries;
-            }
-        }TrailTimelines;
-        /*struct{
-            local int j;
-            local int x;
-            local int entry_size = 4;
-            for (i = 0; i < TrailHeaders[4].EntryCount; i++){
-                FSkip(0x4);
-                u32 EntryID;
-                FSkip(0x8);
-                u32 valueCount;
-                for (x = 0; x < valueCount; x++){
+typedef struct{
+    uint trailPointOffset;
+    ushort trailPointCount;
+    ushort trailPointSize;
     
-                            struct{
-                                u16 ParticleEnabler;
-                                u16 Timing;
-                                local string isEnabled = "???";
-                                if (ParticleEnabler != 0){
-                                    isEnabled = "ENABLED";
-                                }
-                                else{
-                                    isEnabled = "DISABLED";
-                                }
-                            }TimeEntry <comment=isEnabled>;
-                            entry_size = entry_size + 4;
-                        }
-                       
-                        FSkip((4 + (TimeEntryCount * 4)) % 8);
-                    }TimeEntries;
-                    FSkip((4 + (TimeEntryCount * 4)) % 8);
+    uint trailRefOffset;
+    ushort trailRefCount;
+    ushort trailRefSize;
+    
+    uint trailParamOffset;
+    ushort trailParamCount;
+    ushort trailParamSize;
+    
+    uint trailEffectOffset;
+    ushort trailEffectCount;
+    ushort trailEffectSize;
+    
+    uint trailTimelineOffset;
+    ushort trailTimelineCount;
+    ushort trailTimelineSize;
+    
+    
+    struct{
+        u32 ChunkMapID_Animation;
+        u32 EntryID;
+        FSkip(0x0C);
+        u32 FadeTime;
+        u32 unk; //doesn't really do anything
+        u16 unk1; //doesn't really do anything
+        u16 unk2; //doesn't really do anything
+        struct{
+            struct{
+                float R_channel;
+                float G_channel;
+                float B_channel;
+                float A_channel;
+            }Color[3];
+        }TrailColor; //GradientColor
+        float BlendValue; //less value will blend color mainly with 1st and 2nd, bigger value will blend color mainly with 2nd and 3rd color
+        struct{
+            struct{
+                u16 FirstBone <read = (this / 255.0)>; 
+                u16 SecondBone <read = (this / 255.0)>; 
+            }Width[3];
+        }TrailWidth;
+    }TrailPoints[trailPointCount];
+    
+    
+    struct{
+        u32 ChunkMapID_Billboard;
+        u32 EntryID;
+        FSkip(0x18);
+    }TrailReferences[trailRefCount];
+    
+    struct{
+        u32 ChunkMapID_Coord;
+        u32 EntryID;
+        FSkip(0x18);
+        u32 ChunkMapID_Clump;
+        FSkip(0xC);
+    }TrailBones[trailParamCount];
+    
+    struct{
+        uint effect_id;
+        uint effect_type;
+        float pos[3];
+        float rot[3];
+        uint unk;
+        float unk1;
+        float unk2;
+        uint unk3;
+        uint unk4;
+        float unkvector[3];
+    }TrailEffects[trailEffectCount];
+    
+    struct{
+        uint timelineParam[4];
+        int TimeEntryCount;
+    
+            struct{
+                u16 ParticleEnabler;
+                u16 Timing;
+                local string isEnabled = "???";
+                if (ParticleEnabler != 0){
+                    isEnabled = "ENABLED";
                 }
-        }TrailTimelines;*/
-    }TrailHeaderEntries;
-
-} TNuccTrail;
-
+                else{
+                    isEnabled = "DISABLED";
+                }
+            }TimeEntry[TimeEntryCount] <comment=isEnabled>;
+    }TimeEntries[trailTimelineCount];
+    ubyte padding[trailTimelineSize - sizeof(TimeEntries)];
+}TNuccTrail;

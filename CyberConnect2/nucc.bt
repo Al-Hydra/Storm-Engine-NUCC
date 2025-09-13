@@ -21,6 +21,7 @@
 #include "nuccChunkAnmStrmFrame.bt"
 #include "nuccChunkFont.bt"
 #include "nuccChunkBillboard.bt"
+#include "nuccChunkParticle.bt"
 #include "nut.bt"
 
 
@@ -258,7 +259,7 @@ else
     u8 lodGroupCount;
     u8 lodUnkCount;
 
-    if ( Field00 == 2 )
+    if ( flags == 2 )
     {
         f32 BoundingBox[6];
         u32 unkBB;
