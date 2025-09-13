@@ -74,6 +74,7 @@ typedef struct
     
 
     u32 OtherEntryChunkIndices[OtherEntryCount];
+    u32 unkIndices[unkFlag];
 
     // This is bones parents: first u32 is parent, second u32 is child (or current bone)
     struct
@@ -104,7 +105,7 @@ typedef struct
 typedef struct
 {
     s16 ClumpIndex;
-    u16 CoordIndex;
+    s16 CoordIndex;
     
 } TAnmCoord;
 
@@ -116,80 +117,83 @@ typedef struct
 
 typedef struct
 {
-    u16 CurveIndex;
-    u16 CurveFormat;
-    u16 FrameCount;
-    u16 CurveFlags; // Could be just "curve data size"
+    s16 CurveIndex;
+    s16 CurveFormat;
+    s16 FrameCount;
+    s16 CurveFlags; // Could be just "curve data size"
 } TCurveHeader;
 
 typedef struct
 {
     struct TAnmCoord Coord;
 
-    u16 EntryFormat;
-    u16 CurveCount;
-
-    struct TCurveHeader CurveHeaders[CurveCount];
-
-    local int i;
-
-    for (i = 0; i < CurveCount; i++)
+    s16 EntryFormat;
+    s16 CurveCount;
+    
+    if (CurveCount > 0)
     {
-        struct {
-            switch (CurveHeaders[i].CurveFormat)
-            {
-                case 0x05:
-                case 0x08:
-                case 0x15:
-                case 0x1A:
-                case 0x09:
-                    struct TVector3 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    break;
-                case 0x06:
-                    struct TKeyframeVector3 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    break;
-                case 0x0A:
-                    struct TKeyframeVector4 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    break;
-                case 0x0B:
-                case 0x16:
-                case 0x18:
-                    f32 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    break;
-                case 0x0C:
-                    struct TKeyframeFloat Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    break;
-                case 0x0F:
-                    s16 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    if (CurveHeaders[i].FrameCount % 2)
-                    {
-                        FSkip(2);
-                    }
-                    break;
-                case 0x10:
-                    struct TVector3Short Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    if (CurveHeaders[i].FrameCount % 2)
-                    {
-                        FSkip(2);
-                    }
-                    break;
-                case 0x11:
-                case 0x1B:
-                    struct TQuatScaled Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    break;
-                case 0x14:
-                    struct TRgb Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    FSkip(CurveHeaders[i].FrameCount % 4);
-                    break;
-                case 0x1D:
-                    struct TVectorShort Curve[CurveHeaders[i].FrameCount] <optimize=false>;
-                    if (CurveHeaders[i].FrameCount % 4)
-                    {
-                        FSkip(2);
-                    }
-                    break;
-            }
-        } Curve;
+        struct TCurveHeader CurveHeaders[CurveCount];
+    
+        local int i;
+    
+        for (i = 0; i < CurveCount; i++)
+        {
+            struct {
+                switch (CurveHeaders[i].CurveFormat)
+                {
+                    case 0x05:
+                    case 0x08:
+                    case 0x15:
+                    case 0x1A:
+                    case 0x09:
+                        struct TVector3 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        break;
+                    case 0x06:
+                        struct TKeyframeVector3 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        break;
+                    case 0x0A:
+                        struct TKeyframeVector4 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        break;
+                    case 0x0B:
+                    case 0x16:
+                    case 0x18:
+                        f32 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        break;
+                    case 0x0C:
+                        struct TKeyframeFloat Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        break;
+                    case 0x0F:
+                        s16 Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        if (CurveHeaders[i].FrameCount % 2)
+                        {
+                            FSkip(2);
+                        }
+                        break;
+                    case 0x10:
+                        struct TVector3Short Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        if (CurveHeaders[i].FrameCount % 2)
+                        {
+                            FSkip(2);
+                        }
+                        break;
+                    case 0x11:
+                    case 0x1B:
+                        struct TQuatScaled Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        break;
+                    case 0x14:
+                        struct TRgb Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        FSkip(CurveHeaders[i].FrameCount % 4);
+                        break;
+                    case 0x1D:
+                        struct TVectorShort Curve[CurveHeaders[i].FrameCount] <optimize=false>;
+                        if (CurveHeaders[i].FrameCount % 4)
+                        {
+                            FSkip(2);
+                        }
+                        break;
+                }
+            } Curve;
+        }
     }
 } TEntry <optimize=false>;
 

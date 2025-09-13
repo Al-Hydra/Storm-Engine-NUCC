@@ -52,7 +52,7 @@ typedef struct
     {
         while ( !FEof() )
         {
-            struct TPage Page( currentPageStart, currentExtraIndicesStart );
+            struct TPage Page( Version, currentPageStart, currentExtraIndicesStart );
             currentPageStart += Page.pageSize;
             currentExtraIndicesStart += Page.extraIndicesSize;
         }
@@ -127,7 +127,7 @@ typedef struct
     u32 ChunkMapIndex;
 } TExtraMapping <read=ReadTExtraMapping>;
 
-typedef struct( u32 currentPageStart, u32 currentExtraIndicesStart )
+typedef struct( u32 Version, u32 currentPageStart, u32 currentExtraIndicesStart )
 {
     local u32 chunkCount = 0;
     local u32 pageStart = currentPageStart;
@@ -239,10 +239,10 @@ typedef struct
                 struct { struct TNuccAnmStrmFrame Entry[EntryCount]; } Entries;
             } NuccAnmStrmFrame;
             break;*/
-        /*case "nuccChunkParticle":
+        case "nuccChunkParticle":
             struct TNuccParticle NuccParticle;
             u8 Data[Size - (exists(NuccParticle) ? sizeof(NuccParticle) : 0)];
-            break;*/
+            break;
         case "nuccChunkModelPrimitiveBatch":
             struct TNuccModelPremitiveBatch NuccModelPremitiveBatch;
             break;
